@@ -1,0 +1,1 @@
+{"version":3,"file":"orderStatusPatch.d.ts","sourceRoot":"","sources":["../../../src/generated/types/orderStatusPatch.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,sBAAsB,EAAE,MAAM,0BAA0B,CAAC;AAEvE,MAAM,WAAW,gBAAgB;IAC/B,MAAM,EAAE,sBAAsB,CAAC;CAChC"}

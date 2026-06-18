@@ -1,0 +1,1 @@
+{"version":3,"file":"listMenuItemsParams.d.ts","sourceRoot":"","sources":["../../../src/generated/types/listMenuItemsParams.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,MAAM,mBAAmB,GAAG;IAClC,UAAU,CAAC,EAAE,MAAM,CAAC;CACnB,CAAC"}

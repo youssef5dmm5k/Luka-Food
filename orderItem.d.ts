@@ -1,1 +1,0 @@
-{"version":3,"file":"listOrdersStatus.d.ts","sourceRoot":"","sources":["../../../src/generated/types/listOrdersStatus.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,MAAM,gBAAgB,GAAG,OAAO,gBAAgB,CAAC,MAAM,OAAO,gBAAgB,CAAC,CAAC;AAGtF,eAAO,MAAM,gBAAgB;;;;CAInB,CAAC"}

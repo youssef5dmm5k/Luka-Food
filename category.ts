@@ -1,1 +1,0 @@
-{"version":3,"file":"orderStats.d.ts","sourceRoot":"","sources":["../../../src/generated/types/orderStats.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,UAAU;IACzB,OAAO,EAAE,MAAM,CAAC;IAChB,SAAS,EAAE,MAAM,CAAC;IAClB,SAAS,EAAE,MAAM,CAAC;IAClB,UAAU,EAAE,MAAM,CAAC;IACnB,YAAY,EAAE,MAAM,CAAC;CACtB"}

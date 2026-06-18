@@ -1,0 +1,236 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useListOrders, useUpdateOrderStatus, OrderStatus, type Order } from "@workspace/api-client-react";
+import { formatPrice } from "@/lib/helpers";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, ChefHat, Clock, Volume2, VolumeX } from "lucide-react";
+import { format } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+
+function playOrderAlert(ctx: AudioContext) {
+  const now = ctx.currentTime;
+  const freqs = [880, 1100, 880, 1320];
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, now + i * 0.12);
+    gain.gain.linearRampToValueAtTime(0.35, now + i * 0.12 + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.1);
+    osc.start(now + i * 0.12);
+    osc.stop(now + i * 0.12 + 0.12);
+  });
+}
+
+export function CookDisplay() {
+  const { data: orders = [] } = useListOrders({}, { query: { refetchInterval: 4000 } });
+  const updateStatus = useUpdateOrderStatus();
+
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevPendingIdsRef = useRef<Set<number>>(new Set());
+
+  const getOrCreateCtx = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  const pendingOrders = orders.filter((o) => o.status === OrderStatus.pending);
+  const preparingOrders = orders.filter((o) => o.status === OrderStatus.preparing);
+
+  useEffect(() => {
+    const currentIds = new Set(pendingOrders.map((o) => o.id));
+    const prevIds = prevPendingIdsRef.current;
+    const hasNew = [...currentIds].some((id) => !prevIds.has(id));
+
+    if (hasNew && soundEnabled && prevIds.size > 0) {
+      try {
+        const ctx = getOrCreateCtx();
+        if (ctx.state === "suspended") ctx.resume().then(() => playOrderAlert(ctx));
+        else playOrderAlert(ctx);
+      } catch {}
+    }
+    prevPendingIdsRef.current = currentIds;
+  }, [pendingOrders, soundEnabled, getOrCreateCtx]);
+
+  const handleStart = (id: number) =>
+    updateStatus.mutate({ id, data: { status: OrderStatus.preparing } });
+  const handleDone = (id: number) =>
+    updateStatus.mutate({ id, data: { status: OrderStatus.completed } });
+
+  const toggleSound = () => {
+    getOrCreateCtx();
+    setSoundEnabled((v) => !v);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col" dir="rtl">
+      {/* Header */}
+      <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src="/logo.jpg" alt="Luka" className="h-10 w-10 rounded-lg object-cover" />
+          <div>
+            <h1 className="text-xl font-black tracking-tight leading-none">شاشة المطبخ</h1>
+            <p className="text-xs text-muted-foreground">Kitchen Display System</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="font-bold">{pendingOrders.length} معلق</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+              <span className="font-bold">{preparingOrders.length} قيد التحضير</span>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant={soundEnabled ? "default" : "outline"}
+            onClick={toggleSound}
+            className="gap-2"
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            {soundEnabled ? "صوت مفعّل" : "صوت مطفأ"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Columns */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 divide-x divide-x-reverse">
+        {/* Pending */}
+        <div className="flex flex-col bg-destructive/5">
+          <div className="sticky top-0 z-10 bg-destructive/10 border-b px-6 py-3 flex items-center gap-2">
+            <Clock className="h-5 w-5 text-destructive" />
+            <h2 className="font-black text-lg text-destructive">طلبات جديدة</h2>
+            <Badge variant="destructive" className="mr-2">{pendingOrders.length}</Badge>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <AnimatePresence initial={false}>
+              {pendingOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  actionLabel="بدء التحضير ›"
+                  actionVariant="default"
+                  onAction={() => handleStart(order.id)}
+                />
+              ))}
+            </AnimatePresence>
+            {pendingOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+                <CheckCircle2 className="h-10 w-10 opacity-20" />
+                <p>لا توجد طلبات معلقة</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Preparing */}
+        <div className="flex flex-col bg-primary/5">
+          <div className="sticky top-0 z-10 bg-primary/10 border-b px-6 py-3 flex items-center gap-2">
+            <ChefHat className="h-5 w-5 text-primary" />
+            <h2 className="font-black text-lg text-primary">قيد التحضير</h2>
+            <Badge className="mr-2">{preparingOrders.length}</Badge>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <AnimatePresence initial={false}>
+              {preparingOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  actionLabel="✓ تم التحضير"
+                  actionVariant="success"
+                  onAction={() => handleDone(order.id)}
+                />
+              ))}
+            </AnimatePresence>
+            {preparingOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+                <ChefHat className="h-10 w-10 opacity-20" />
+                <p>لا يوجد طلبات قيد التحضير</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderCard({
+  order,
+  actionLabel,
+  actionVariant,
+  onAction,
+}: {
+  order: Order;
+  actionLabel: string;
+  actionVariant: "default" | "success";
+  onAction: () => void;
+}) {
+  const elapsed = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.2 }}
+      className="rounded-2xl border bg-card shadow-sm overflow-hidden"
+    >
+      {/* Order header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-xl w-14 h-14 font-black leading-none">
+            <span className="text-xs opacity-70">طاولة</span>
+            <span className="text-2xl">{order.tableNumber}</span>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">#{order.id} · {format(new Date(order.createdAt), "HH:mm")}</div>
+            <div className="text-sm font-medium text-muted-foreground">
+              {elapsed === 0 ? "الآن" : `منذ ${elapsed} دقيقة`}
+            </div>
+          </div>
+        </div>
+        <div className="text-left">
+          <div className="font-black text-lg text-primary">{formatPrice(order.totalPrice)}</div>
+        </div>
+      </div>
+
+      {/* Items */}
+      <ul className="px-5 py-3 space-y-2">
+        {order.items.map((item) => (
+          <li key={item.id} className="flex items-center justify-between text-base">
+            <span className="font-medium">{item.menuItemName}</span>
+            <span className="font-black text-xl text-primary ml-3">{item.quantity}×</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Notes */}
+      {order.notes && (
+        <div className="mx-4 mb-3 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-sm text-destructive font-medium">
+          ⚠️ {order.notes}
+        </div>
+      )}
+
+      {/* Action */}
+      <div className="px-4 pb-4">
+        <Button
+          className={`w-full h-12 text-base font-bold ${actionVariant === "success" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      </div>
+    </motion.div>
+  );
+}

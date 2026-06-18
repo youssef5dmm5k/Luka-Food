@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { ClientMenu } from "@/pages/client/menu";
 import { KitchenDashboard } from "@/pages/kitchen/dashboard";
+import { CartProvider } from "@/contexts/cart-context";
 
 const queryClient = new QueryClient();
 
@@ -22,12 +23,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </CartProvider>
     </QueryClientProvider>
   );
 }

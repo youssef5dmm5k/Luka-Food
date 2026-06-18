@@ -1,22 +1,24 @@
 import { useListCategories, useListMenuItems } from "@workspace/api-client-react";
 import { formatPrice } from "@/lib/helpers";
-import { useCart } from "@/hooks/use-cart";
+import { useCart } from "@/contexts/cart-context";
 import { CartDrawer } from "@/components/cart-drawer";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PinDialog } from "@/components/pin-dialog";
 
 export function ClientMenu() {
   const { data: categories = [], isLoading: isLoadingCategories } = useListCategories();
   const { data: menuItems = [], isLoading: isLoadingItems } = useListMenuItems();
   const { addItem } = useCart();
-  
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [showPin, setShowPin] = useState(false);
 
   const filteredItems = useMemo(() => {
-    if (!selectedCategoryId) return menuItems;
+    if (!selectedCategoryId) return menuItems.filter(i => i.available !== false);
     return menuItems.filter(item => item.categoryId === selectedCategoryId);
   }, [menuItems, selectedCategoryId]);
 
@@ -30,15 +32,26 @@ export function ClientMenu() {
 
   return (
     <div className="min-h-screen pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-primary tracking-tight">LUKA FOOD</h1>
-            <p className="text-sm text-muted-foreground">أصالة المذاق التونسي</p>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.jpg" alt="Luka Food" className="h-12 w-12 rounded-xl object-cover" />
+            <div>
+              <h1 className="text-xl font-black text-primary tracking-tight leading-none">LUKA FOOD</h1>
+              <p className="text-xs text-muted-foreground">أصالة المذاق التونسي</p>
+            </div>
           </div>
+
+          {/* Hidden kitchen access — subtle dot top-left (RTL: visually top-right of content end) */}
+          <button
+            onClick={() => setShowPin(true)}
+            className="w-2 h-2 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/40 transition-colors focus:outline-none"
+            aria-label="."
+            data-testid="btn-hidden-kitchen"
+            title=""
+          />
         </div>
-        
+
         {/* Categories */}
         <ScrollArea className="w-full whitespace-nowrap border-b">
           <div className="flex w-max space-x-2 space-x-reverse p-4">
@@ -64,7 +77,6 @@ export function ClientMenu() {
         </ScrollArea>
       </header>
 
-      {/* Menu Grid */}
       <main className="container mx-auto px-4 py-8">
         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <AnimatePresence mode="popLayout">
@@ -76,7 +88,8 @@ export function ClientMenu() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
                 key={item.id}
-                className={`group flex flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:shadow-lg ${!item.available ? 'opacity-50 grayscale' : ''}`}
+                className={`group flex flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:shadow-lg ${!item.available ? "opacity-50 grayscale" : ""}`}
+                data-testid={`card-menu-item-${item.id}`}
               >
                 <div className="aspect-video relative overflow-hidden bg-muted">
                   {item.imageUrl ? (
@@ -96,24 +109,21 @@ export function ClientMenu() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-2 flex items-start justify-between gap-4">
                     <h3 className="font-bold text-lg leading-tight">{item.name}</h3>
-                    <span className="font-black text-primary whitespace-nowrap">
-                      {formatPrice(item.price)}
-                    </span>
+                    <span className="font-black text-primary whitespace-nowrap">{formatPrice(item.price)}</span>
                   </div>
                   {item.description && (
-                    <p className="mb-4 text-sm text-muted-foreground flex-1">
-                      {item.description}
-                    </p>
+                    <p className="mb-4 text-sm text-muted-foreground flex-1">{item.description}</p>
                   )}
-                  
+
                   <Button
                     className="w-full mt-auto rounded-xl"
                     disabled={!item.available}
                     onClick={() => addItem(item)}
+                    data-testid={`button-add-to-cart-${item.id}`}
                   >
                     <Plus className="ml-2 h-4 w-4" />
                     إضافة للسلة
@@ -123,7 +133,7 @@ export function ClientMenu() {
             ))}
           </AnimatePresence>
         </motion.div>
-        
+
         {filteredItems.length === 0 && (
           <div className="flex py-20 flex-col items-center justify-center text-center">
             <p className="text-lg text-muted-foreground">لا توجد أصناف في هذا القسم</p>
@@ -131,10 +141,13 @@ export function ClientMenu() {
         )}
       </main>
 
-      {/* Floating Cart Button */}
+      {/* Floating Cart */}
       <div className="fixed bottom-6 left-6 z-50">
         <CartDrawer />
       </div>
+
+      {/* PIN Dialog */}
+      <PinDialog open={showPin} onClose={() => setShowPin(false)} />
     </div>
   );
 }

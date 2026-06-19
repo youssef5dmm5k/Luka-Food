@@ -2,7 +2,6 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
 import { ClientMenu } from "@/pages/client/menu";
 import { KitchenDashboard } from "@/pages/kitchen/dashboard";
 import { CartProvider } from "@/contexts/cart-context";
@@ -15,7 +14,6 @@ function Router() {
       <Route path="/" component={ClientMenu} />
       <Route path="/kitchen/*" component={KitchenDashboard} />
       <Route path="/kitchen" component={KitchenDashboard} />
-      <Route component={NotFound} />
     </Switch>
   );
 }

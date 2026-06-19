@@ -131,7 +131,7 @@ export function OrdersManager() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">إيرادات اليوم</CardTitle>
-            <span className="text-sm font-bold text-muted-foreground">TND</span>
+            <span className="text-sm font-bold text-muted-foreground font-en">TND</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{formatPrice(stats?.revenueToday || 0)}</div>

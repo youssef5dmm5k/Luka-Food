@@ -9,3 +9,8 @@ export const statusLabel: Record<OrderStatus, string> = {
   [OrderStatus.preparing]: "قيد التحضير",
   [OrderStatus.completed]: "مكتمل",
 };
+
+export function isEnglishText(text: string): boolean {
+  const latinChars = text.match(/[a-zA-Z]/g)?.length || 0;
+  return latinChars > 0 && latinChars / text.length > 0.5;
+}

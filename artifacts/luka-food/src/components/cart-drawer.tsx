@@ -1,6 +1,6 @@
 import { ShoppingBag, X, Plus, Minus } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
-import { formatPrice } from "@/lib/helpers";
+import { formatPrice, isEnglishText } from "@/lib/helpers";
 import {
   Sheet,
   SheetContent,
@@ -135,7 +135,7 @@ export function CartDrawer() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm leading-tight">{item.menuItem.name}</h4>
+                        <h4 className={`font-semibold text-sm leading-tight ${isEnglishText(item.menuItem.name) ? "font-en" : ""}`}>{item.menuItem.name}</h4>
                         <p className="text-sm font-bold text-primary">{formatPrice(item.menuItem.price)}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">

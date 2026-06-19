@@ -1,5 +1,5 @@
 import { useListCategories, useListMenuItems, type MenuItem } from "@workspace/api-client-react";
-import { formatPrice } from "@/lib/helpers";
+import { formatPrice, isEnglishText } from "@/lib/helpers";
 import { useCart } from "@/contexts/cart-context";
 import { CartDrawer } from "@/components/cart-drawer";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-secondary/10">
-            <span className="text-4xl font-black text-secondary/30 group-hover:text-secondary/50 transition-colors">LUKA</span>
+            <span className="text-4xl font-black text-secondary/30 group-hover:text-secondary/50 transition-colors font-en">LUKA</span>
           </div>
         )}
         {!item.available && (
@@ -53,11 +53,11 @@ function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
 
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-2 flex items-start justify-between gap-4">
-          <h3 className="font-bold text-lg leading-tight">{item.name}</h3>
+          <h3 className={`font-bold text-lg leading-tight ${isEnglishText(item.name) ? "font-en" : ""}`}>{item.name}</h3>
           <span className="font-black text-primary whitespace-nowrap">{formatPrice(item.price)}</span>
         </div>
         {item.description && (
-          <p className="mb-4 text-sm text-muted-foreground flex-1 leading-relaxed">{item.description}</p>
+          <p className={`mb-4 text-sm text-muted-foreground flex-1 leading-relaxed ${item.description && isEnglishText(item.description) ? "font-en" : ""}`}>{item.description}</p>
         )}
 
         <motion.div whileTap={{ scale: 0.95 }} className="mt-auto">
@@ -138,8 +138,8 @@ export function ClientMenu() {
               transition={{ type: "spring", stiffness: 400 }}
             />
             <div className="flex flex-col leading-none">
-              <span className="text-xl font-black text-primary tracking-tight">Luka Food</span>
-              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide">Fast Food & Resto</span>
+              <span className="text-xl font-black text-primary tracking-tight font-en">Luka Food</span>
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide font-en">Fast Food & Resto</span>
             </div>
           </div>
 
@@ -168,7 +168,7 @@ export function ClientMenu() {
                 className="rounded-full px-6"
                 onClick={() => setSelectedCategoryId(category.id)}
               >
-                {category.name}
+                <span className={isEnglishText(category.name) ? "font-en" : ""}>{category.name}</span>
               </Button>
             ))}
           </div>

@@ -143,6 +143,18 @@ export function ClientMenu() {
         <CartDrawer />
       </div>
 
+      {/* Developer credit */}
+      <footer className="border-t bg-card/50 py-4 px-4 mt-8">
+        <div className="container mx-auto flex items-center justify-center gap-3">
+          <img src="/raqm-studio.jpg" alt="RAQM Studio" className="h-8 w-8 rounded-full object-cover" />
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium">RAQM Studio</span>
+            <span className="mx-2">·</span>
+            <span>في حالة أردت التواصل معنا</span>
+          </div>
+        </div>
+      </footer>
+
       {/* PIN Dialog */}
       <PinDialog open={showPin} onClose={() => setShowPin(false)} />
     </div>

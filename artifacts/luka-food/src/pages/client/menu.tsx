@@ -5,7 +5,7 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, Check } from "lucide-react";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PinDialog } from "@/components/pin-dialog";
 
@@ -49,13 +49,6 @@ function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
             <span className="rounded-full bg-background px-4 py-1 font-bold text-destructive">غير متوفر</span>
           </div>
         )}
-        {item.available && (
-          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
-              {formatPrice(item.price)}
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="flex flex-1 flex-col p-5">
@@ -67,10 +60,7 @@ function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
           <p className="mb-4 text-sm text-muted-foreground flex-1 leading-relaxed">{item.description}</p>
         )}
 
-        <motion.div
-          whileTap={{ scale: 0.95 }}
-          className="mt-auto"
-        >
+        <motion.div whileTap={{ scale: 0.95 }} className="mt-auto">
           <Button
             className={`w-full rounded-xl transition-all duration-300 ${added ? "bg-green-600 hover:bg-green-700" : ""}`}
             disabled={!item.available}
@@ -109,41 +99,18 @@ function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: () => void }) {
   );
 }
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
-};
-
 export function ClientMenu() {
   const { data: categories = [], isLoading: isLoadingCategories } = useListCategories();
   const { data: menuItems = [], isLoading: isLoadingItems } = useListMenuItems();
   const { addItem } = useCart();
-  const sectionRefs = useRef<Record<number, HTMLElement | null>>({});
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [showPin, setShowPin] = useState(false);
 
-  const categorySections = useMemo(() => {
-    if (selectedCategoryId !== null) {
-      const cat = categories.find((c) => c.id === selectedCategoryId);
-      const items = menuItems.filter((i) => i.categoryId === selectedCategoryId);
-      return cat ? [{ category: cat, items }] : [];
-    }
-    return categories
-      .map((cat) => ({
-        category: cat,
-        items: menuItems.filter((i) => i.categoryId === cat.id && i.available !== false),
-      }))
-      .filter((s) => s.items.length > 0);
-  }, [menuItems, categories, selectedCategoryId]);
-
-  const scrollToCategory = (id: number) => {
-    setSelectedCategoryId(null);
-    requestAnimationFrame(() => {
-      const el = sectionRefs.current[id];
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  };
+  const filteredItems = useMemo(() => {
+    if (selectedCategoryId === null) return menuItems.filter((i) => i.available !== false);
+    return menuItems.filter((i) => i.categoryId === selectedCategoryId);
+  }, [menuItems, selectedCategoryId]);
 
   if (isLoadingCategories || isLoadingItems) {
     return (
@@ -199,13 +166,7 @@ export function ClientMenu() {
                 key={category.id}
                 variant={selectedCategoryId === category.id ? "default" : "outline"}
                 className="rounded-full px-6"
-                onClick={() => {
-                  if (selectedCategoryId === null) {
-                    scrollToCategory(category.id);
-                  } else {
-                    setSelectedCategoryId(category.id);
-                  }
-                }}
+                onClick={() => setSelectedCategoryId(category.id)}
               >
                 {category.name}
               </Button>
@@ -215,44 +176,23 @@ export function ClientMenu() {
         </ScrollArea>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        <AnimatePresence>
-          {categorySections.map(({ category, items }) => (
-            <motion.section
-              key={category.id}
-              ref={(el) => { sectionRefs.current[category.id] = el; }}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <h2 className="text-2xl font-black">{category.name}</h2>
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                  {items.length} صنف
-                </span>
-              </div>
+      <main className="container mx-auto px-4 py-8">
+        <motion.div
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredItems.map((item) => (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                onAdd={() => addItem(item)}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              >
-                {items.map((item) => (
-                  <MenuItemCard
-                    key={item.id}
-                    item={item}
-                    onAdd={() => addItem(item)}
-                  />
-                ))}
-              </motion.div>
-            </motion.section>
-          ))}
-        </AnimatePresence>
-
-        {categorySections.length === 0 && (
+        {filteredItems.length === 0 && (
           <div className="flex py-20 flex-col items-center justify-center text-center">
             <p className="text-lg text-muted-foreground">لا توجد أصناف في هذا القسم</p>
           </div>

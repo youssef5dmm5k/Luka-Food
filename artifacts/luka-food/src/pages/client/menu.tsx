@@ -170,7 +170,10 @@ export function ClientMenu() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400 }}
             />
-            <p className="text-xs text-muted-foreground">أصالة المذاق التونسي</p>
+            <div className="flex flex-col leading-none">
+              <span className="text-xl font-black text-primary tracking-tight">Luka Food</span>
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide">Fast Food & Resto</span>
+            </div>
           </div>
 
           <button

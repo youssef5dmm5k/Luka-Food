@@ -9,8 +9,8 @@ import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function OrdersManager() {
-  const { data: stats } = useGetOrderStats({ query: { refetchInterval: 5000 } });
-  const { data: orders = [] } = useListOrders({}, { query: { refetchInterval: 5000 } });
+  const { data: stats } = useGetOrderStats({ query: { queryKey: ["orderStats"], refetchInterval: 5000 } });
+  const { data: orders = [] } = useListOrders({}, { query: { queryKey: ["orders"], refetchInterval: 5000 } });
   const updateStatus = useUpdateOrderStatus();
 
   const handleUpdateStatus = (id: number, status: OrderStatus) => {

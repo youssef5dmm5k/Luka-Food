@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CookDisplay() {
-  const { data: orders = [] } = useListOrders({}, { query: { refetchInterval: 4000 } });
+  const { data: orders = [] } = useListOrders({}, { query: { queryKey: ["orders"], refetchInterval: 4000 } });
   const updateStatus = useUpdateOrderStatus();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -20,11 +20,11 @@ export function CookDisplay() {
     audioRef.current.preload = "auto";
   }, []);
 
-  const pendingOrders = orders.filter((o) => o.status === OrderStatus.pending);
-  const preparingOrders = orders.filter((o) => o.status === OrderStatus.preparing);
+  const pendingOrders = orders.filter((o: Order) => o.status === OrderStatus.pending);
+  const preparingOrders = orders.filter((o: Order) => o.status === OrderStatus.preparing);
 
   useEffect(() => {
-    const currentIds = new Set(pendingOrders.map((o) => o.id));
+    const currentIds = new Set<number>(pendingOrders.map((o: Order) => o.id));
 
     if (prevPendingIdsRef.current === null) {
       prevPendingIdsRef.current = currentIds;
@@ -32,7 +32,7 @@ export function CookDisplay() {
     }
 
     const prevIds = prevPendingIdsRef.current;
-    const hasNew = [...currentIds].some((id) => !prevIds.has(id));
+    const hasNew = [...currentIds].some((id: number) => !prevIds.has(id));
 
     if (hasNew && soundEnabled && audioRef.current) {
       audioRef.current.currentTime = 0;

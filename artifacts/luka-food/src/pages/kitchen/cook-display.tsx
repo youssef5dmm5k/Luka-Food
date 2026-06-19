@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useListOrders, useUpdateOrderStatus, OrderStatus, type Order } from "@workspace/api-client-react";
 import { formatPrice } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
@@ -7,37 +7,17 @@ import { CheckCircle2, ChefHat, Clock, Volume2, VolumeX } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
-function playOrderAlert(ctx: AudioContext) {
-  const now = ctx.currentTime;
-  const freqs = [880, 1100, 880, 1320];
-  freqs.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0, now + i * 0.12);
-    gain.gain.linearRampToValueAtTime(0.35, now + i * 0.12 + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.1);
-    osc.start(now + i * 0.12);
-    osc.stop(now + i * 0.12 + 0.12);
-  });
-}
-
 export function CookDisplay() {
   const { data: orders = [] } = useListOrders({}, { query: { refetchInterval: 4000 } });
   const updateStatus = useUpdateOrderStatus();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const prevPendingIdsRef = useRef<Set<number>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevPendingIdsRef = useRef<Set<number> | null>(null);
 
-  const getOrCreateCtx = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    }
-    return audioCtxRef.current;
+  useEffect(() => {
+    audioRef.current = new Audio("/alert.mp3");
+    audioRef.current.preload = "auto";
   }, []);
 
   const pendingOrders = orders.filter((o) => o.status === OrderStatus.pending);
@@ -45,28 +25,27 @@ export function CookDisplay() {
 
   useEffect(() => {
     const currentIds = new Set(pendingOrders.map((o) => o.id));
+
+    if (prevPendingIdsRef.current === null) {
+      prevPendingIdsRef.current = currentIds;
+      return;
+    }
+
     const prevIds = prevPendingIdsRef.current;
     const hasNew = [...currentIds].some((id) => !prevIds.has(id));
 
-    if (hasNew && soundEnabled && prevIds.size > 0) {
-      try {
-        const ctx = getOrCreateCtx();
-        if (ctx.state === "suspended") ctx.resume().then(() => playOrderAlert(ctx));
-        else playOrderAlert(ctx);
-      } catch {}
+    if (hasNew && soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
     }
+
     prevPendingIdsRef.current = currentIds;
-  }, [pendingOrders, soundEnabled, getOrCreateCtx]);
+  }, [pendingOrders, soundEnabled]);
 
   const handleStart = (id: number) =>
     updateStatus.mutate({ id, data: { status: OrderStatus.preparing } });
   const handleDone = (id: number) =>
     updateStatus.mutate({ id, data: { status: OrderStatus.completed } });
-
-  const toggleSound = () => {
-    getOrCreateCtx();
-    setSoundEnabled((v) => !v);
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir="rtl">
@@ -90,7 +69,7 @@ export function CookDisplay() {
           <Button
             size="sm"
             variant={soundEnabled ? "default" : "outline"}
-            onClick={toggleSound}
+            onClick={() => setSoundEnabled((v) => !v)}
             className="gap-2"
           >
             {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
@@ -183,7 +162,6 @@ function OrderCard({
       transition={{ duration: 0.2 }}
       className="rounded-2xl border bg-card shadow-sm overflow-hidden"
     >
-      {/* Order header */}
       <div className="flex items-center justify-between px-5 py-4 border-b bg-muted/30">
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-xl w-14 h-14 font-black leading-none">
@@ -202,7 +180,6 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Items */}
       <ul className="px-5 py-3 space-y-2">
         {order.items.map((item) => (
           <li key={item.id} className="flex items-center justify-between text-base">
@@ -212,14 +189,12 @@ function OrderCard({
         ))}
       </ul>
 
-      {/* Notes */}
       {order.notes && (
         <div className="mx-4 mb-3 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-sm text-destructive font-medium">
           ⚠️ {order.notes}
         </div>
       )}
 
-      {/* Action */}
       <div className="px-4 pb-4">
         <Button
           className={`w-full h-12 text-base font-bold ${actionVariant === "success" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}

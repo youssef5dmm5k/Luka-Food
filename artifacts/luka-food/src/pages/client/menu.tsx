@@ -36,13 +36,10 @@ export function ClientMenu() {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo.jpg" alt="Luka Food" className="h-12 w-12 rounded-xl object-cover" />
-            <div>
-              <h1 className="text-xl font-black text-primary tracking-tight leading-none">LUKA FOOD</h1>
-              <p className="text-xs text-muted-foreground">أصالة المذاق التونسي</p>
-            </div>
+            <p className="text-xs text-muted-foreground">أصالة المذاق التونسي</p>
           </div>
 
-          {/* Hidden kitchen access — subtle dot top-left (RTL: visually top-right of content end) */}
+          {/* Hidden kitchen access — subtle dot */}
           <button
             onClick={() => setShowPin(true)}
             className="w-2 h-2 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/40 transition-colors focus:outline-none"

@@ -74,10 +74,7 @@ export function CookDisplay() {
       <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/logo.jpg" alt="Luka" className="h-10 w-10 rounded-lg object-cover" />
-          <div>
-            <h1 className="text-xl font-black tracking-tight leading-none">شاشة المطبخ</h1>
-            <p className="text-xs text-muted-foreground">Kitchen Display System</p>
-          </div>
+          <p className="text-xs text-muted-foreground">Kitchen Display System</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-4 text-sm">

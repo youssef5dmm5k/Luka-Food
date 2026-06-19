@@ -20,10 +20,7 @@ export function KitchenDashboard() {
       <aside className="w-full md:w-64 border-l bg-card flex flex-col">
         <div className="p-5 border-b flex items-center gap-3">
           <img src="/logo.jpg" alt="Luka" className="h-10 w-10 rounded-xl object-cover" />
-          <div>
-            <h1 className="text-lg font-black text-primary leading-none">LUKA KITCHEN</h1>
-            <p className="text-xs text-muted-foreground">لوحة إدارة المطعم</p>
-          </div>
+          <p className="text-xs text-muted-foreground">لوحة إدارة المطعم</p>
         </div>
         <nav className="flex-1 p-4 space-y-1.5 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
           {navItems.map((item) => {
